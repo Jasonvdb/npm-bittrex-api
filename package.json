@@ -1,6 +1,6 @@
 {
 	"name": "bittrex-api",
-	"version": "0.1.1",
+	"version": "0.1.11",
 	"description": "bittrex.com API client for node.js",
 	"keywords": [
 		"btc",

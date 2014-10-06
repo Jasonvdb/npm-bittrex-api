@@ -50,4 +50,4 @@ The methods were modeled after the python client located here: https://github.co
 
 Feeling generous? Send me a fraction of a bitcoin!
 
-1K1MjEj33GK9V6qn1jbj6wN2EP2hzzwbnx
+1GZ55vWmv1CBe8VB5fRrDcNA5PXyus7g1n

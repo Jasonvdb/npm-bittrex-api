@@ -1,8 +1,6 @@
 This is an asynchronous node js client for the bittrex.com API.
 
 It exposes all the API methods found here: https://www.bittrex.com/Home/Api.
-
-Instead of exposing the getmarketid method, it is used internally to convert market ids from the format Target/Base to the internal format of Base-Target.
  
 Example Usage:
 

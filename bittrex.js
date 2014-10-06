@@ -192,7 +192,7 @@ function BittrexClient(key, secret, requeue) {
     };
 
     self.getdeposithistory = function (currencyArg, countArg, callback) {
-        api_query('getdesposithistory', callback, { currency: currencyArg, count: countArg });
+        api_query('getdeposithistory', callback, { currency: currencyArg, count: countArg });
     };
 }
 

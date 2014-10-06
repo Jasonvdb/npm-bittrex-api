@@ -5,7 +5,7 @@ It exposes all the API methods found here: https://www.bittrex.com/Home/Api.
 Example Usage:
 
 ```javascript
-var market = 'LTC/BTC';
+var market = 'BTC-LTC';
 var bittrex = require('bittrex-api');
 var client = new bittrex('my_public_key', 'my_private_key');
 

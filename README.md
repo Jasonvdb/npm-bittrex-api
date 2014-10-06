@@ -38,7 +38,7 @@ function callback(error, result) {
 
 Credit:
 
-This package is modeled after the API from nothingisdead/npm-cryptsy-api, converted for use with Bittrex. 
+This package is modeled after the API from nothingisdead/npm-cryptsy-api, converted for use with Bittrex found here: https://github.com/nothingisdead/npm-cryptsy-api.git
 
 This package was first modeled after the mtgox-apiv2 npm package located here: https://github.com/ameen3/node-mtgox-apiv2.
 

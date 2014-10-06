@@ -2,16 +2,14 @@ var stringify = require("querystring").stringify,
     hmac = require("crypto").createHmac,
     request = require("request"),
     hmac_sha512 = require('./hmac-sha512.js'),
-    publicMethods = ['getmarkets','getcurrencies','getticker','getmarketsummaries','getorderbook','getmarkethistory'];
-    accountMethods = ['getbalances','getbalance','getwithdrawalhistory','getdepositaddress'];
+    publicMethods = ['getmarkets','getcurrencies','getticker','getmarketsummaries','getmarketsummary','getorderbook','getmarkethistory'],
+    accountMethods = ['getbalances','getbalance','getdepositaddress','withdraw','getorder','getorderhistory','getwithdrawalhistory','getdeposithistory'];
 
 function BittrexClient(key, secret, requeue) {
 
     var stringify = require("querystring").stringify,
         hmac = require("crypto").createHmac,
-        request = require("request"),
-        publicMethods = ['getmarkets','getcurrencies','getticker','getmarketsummaries','getorderbook','getmarkethistory'],
-        accountMethods = ['getbalances','getbalance','getwithdrawalhistory','getdepositaddress'];
+        request = require("request")
 
     var self = this;
     
@@ -197,4 +195,3 @@ function BittrexClient(key, secret, requeue) {
 }
 
 module.exports = BittrexClient;
-

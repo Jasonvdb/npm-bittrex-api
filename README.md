@@ -2,12 +2,15 @@ This is an asynchronous node js client for the bittrex.com API.
 
 It exposes all the API methods found here: https://www.bittrex.com/Home/Api.
  
- 
+```
 npm install bittrex-api
+```
 
 -or-
 
+```
 git clone https://github.com/mwhite73/npm-bittrex-api.git
+```
 
 
 Example Usage:

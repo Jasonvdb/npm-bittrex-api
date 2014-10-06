@@ -183,15 +183,15 @@ function BittrexClient(key, secret, requeue) {
         api_query('getorder', callback, { uuid : uuidArg });
     };
 
-    self.getorderhistory = function (marketArg, countArg) {
+    self.getorderhistory = function (marketArg, countArg, callback) {
         api_query('getorderhistory', callback, { market: marketArg, count: countArg });
     };
 
-    self.getwithdrawalhistory = function (currencyArg, countArg) {
+    self.getwithdrawalhistory = function (currencyArg, countArg, callback) {
         api_query('getwithdrawalhistory', callback, { currency: currencyArg, count: countArg });
     };
 
-    self.getdeposithistory = function (currencyArg, countArg) {
+    self.getdeposithistory = function (currencyArg, countArg, callback) {
         api_query('getdesposithistory', callback, { currency: currencyArg, count: countArg });
     };
 }

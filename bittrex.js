@@ -1,238 +1,200 @@
-var stringify     = require("querystring").stringify,
-	hmac          = require("crypto").createHmac,
-	request       = require("request"),
-	publicMethods = ['marketdata','marketdatav2','orderdata','orderdatav2','singleorderdata','singlemarketdata'];
+var stringify = require("querystring").stringify,
+    hmac = require("crypto").createHmac,
+    request = require("request"),
+    hmac_sha512 = require('./hmac-sha512.js'),
+    publicMethods = ['getmarkets','getcurrencies','getticker','getmarketsummaries','getorderbook','getmarkethistory'];
+    accountMethods = ['getbalances','getbalance','getwithdrawalhistory','getdepositaddress'];
 
-function CryptsyClient(key, secret, requeue) {
-	var self    = this;
+function BittrexClient(key, secret, requeue) {
 
-	self.key     = key;
-	self.secret  = secret;
-	self.jar     = request.jar();
-	self.requeue = requeue || 0;
+    var stringify = require("querystring").stringify,
+        hmac = require("crypto").createHmac,
+        request = require("request"),
+        publicMethods = ['getmarkets','getcurrencies','getticker','getmarketsummaries','getorderbook','getmarkethistory'],
+        accountMethods = ['getbalances','getbalance','getwithdrawalhistory','getdepositaddress'];
 
-	function api_query(method, callback, args)
-	{
-		var args_tmp = {};
+    var self = this;
+    
+    self.key = key;
+    self.secret = secret;
+    self.jar = request.jar();
+    self.requeue = requeue || 0;
+    
+    var getNonce = function () {
+        return Math.floor(new Date().getTime() / 1000);
+    };
 
-		for(var i in args) {
-			if(args[i]) {
-				args_tmp[i] = args[i];
-			}
-		}
+    function api_query(method, callback, args) {
+        var args_tmp = {};
+        
+        for (var i in args) {
+            if (args[i]) {
+                args_tmp[i] = args[i];
+            }
+        }
+        
+        args = args_tmp;
+        
+        var options = {
+            uri     : 'https://bittrex.com/api/v1.1',
+            agent   : false,
+            method  : 'GET',
+            jar     : self.jar,
+            headers : {
+                "User-Agent": "Mozilla/4.0 (compatible; Node Bittrex API)",
+                "Content-type": "application/x-www-form-urlencoded"
+            }
+        };
+        
+        if (publicMethods.indexOf(method) > -1) {
+            options.method = 'GET';
+            options.uri = 'http://bittrex.com/api/v1.1/public/' + method + (args ? "?" + stringify(args) : "");
+        } else {
+            args.apikey = self.key;
+            args.nonce = getNonce();
+            if (accountMethods.indexOf(method) > -1) {
+                options.method = 'GET';
+                options.uri = 'https://bittrex.com/api/v1.1/account/' + method + "?" + stringify(args);
+            } else {
+                options.method = 'GET';
+                options.uri = 'https://bittrex.com/api/v1.1/market/' + method + "?" + stringify(args);
+            }
+            
 
-		args = args_tmp;
+            if (!self.key || !self.secret) {
+                throw new Error("Must provide key and secret to make this API request.");
+            }
+            else {
+                options.headers.apisign = hmac_sha512.HmacSHA512(options.uri, self.secret);
+            }
+        }
 
-		var options = {
-			uri     : 'https://api.cryptsy.com/api',
-			agent   : false,
-			method  : 'POST',
-			jar     : self.jar,
-			headers : {
-				"User-Agent": "Mozilla/4.0 (compatible; Cryptsy API node client)",
-				"Content-type": "application/x-www-form-urlencoded"
-			}
-		};
+        request(options, function (err, res, body) {
+            if (!body || !res || res.statusCode != 200) {
+                var requeue = +self.requeue;
+                
+                if (requeue) {
+                    setTimeout(function () {
+                        api_query(method, callback, args);
+                    }, requeue);
+                }
+                else if (typeof callback === 'function') {
+                    callback.call(this, "Error in server response", null);
+                }
+            }
+            else {
+                var error = null;
+                var result = null;
+                
+                try {
+                    var response = JSON.parse(body);
+                    
+                    if (response.error) {
+                        error = response.error;
+                    }
+                    else {
+                        result = response.return || response;
+                    }
+                }
+				catch (e) {
+                    error = "Error parsing server response: " + e.message;
+                }
+                
+                if (typeof callback === 'function') {
+                    callback.call(this, error, result);
+                }
+            }
+        });
+    }
 
-		args.method = method;
+    self.getmarkets = function(callback) {
+        api_query('getmarkets', callback);
+    };
 
-		if(publicMethods.indexOf(method) > -1)
-		{
-			options.method = 'GET';
-			options.uri    = 'http://pubapi.cryptsy.com/api.php?' + stringify(args);
-		}
-		else
-		{
-			if (!self.key || !self.secret) {
-				throw new Error("Must provide key and secret to make this API request.");
-			}
-			else
-			{
-				args.nonce = new Date().getTime();
+    self.getcurrencies = function(callback) {
+        api_query('getcurrencies', callback);
+    };
+    
+    self.getticker = function (marketArg, callback) {
+        api_query('getticker', callback, { market: marketArg });
+    };
+    
+    self.getmarketsummaries = function (callback) {
+        api_query('getmarketsummaries', callback);
+    };
+    
+    self.getmarketsummary = function (marketArg, callback) {
+        api_query('getmarketsummary', callback, { market: marketArg });
+    };
 
-				var message        = stringify(args);
-				var signed_message = new hmac("sha512", self.secret);
+    self.getorderbook = function (marketArg, typeArg, depthArg, callback) {
+        api_query('getorderbook', callback, { market: marketArg, type: typeArg, depth: depthArg });
+    };
 
-				signed_message.update(message);
+    self.getmarkethistory = function (marketArg, countArg, callback) {
+        api_query('getmarkethistory', callback, { market: marketArg, count: countArg });
+    };
+    
+    self.buylimit = function (marketArg, quantityArg, rateArg, callback) {
+        api_query('buylimit', callback, { market: marketArg, quantity: quantityArg, rate: rateArg });
+    };
 
-				options.headers.Key  = self.key;
-				options.headers.Sign = signed_message.digest('hex');
-				options.body         = message;
-			}
-		}
-		request(options, function(err, res, body) {
-			if(!body || !res || res.statusCode != 200) {
-				var requeue = +self.requeue;
+    self.buymarket = function (marketArg, quantityArg, callback) {
+        api_query('buymarket', callback, { market: marketArg, quantity: quantityArg });
+    };
 
-				if(requeue) {
-					setTimeout(function() {
-						api_query(method, callback, args);
-					}, requeue);
-				}
-				else if(typeof callback === 'function') {
-					callback.call(this, "Error in server response", null);
-				}
-			}
-			else {
-				var error  = null;
-				var result = null;
+    self.selllimit = function (marketArg, quantityArg, rateArg, callback) {
+        api_query('selllimit', callback, { market: marketArg, quantity: quantityArg, rate: rateArg });
+    };
+    
+    self.sellmarket = function (marketArg, quantityArg, callback) {
+        api_query('sellmarket', callback, { market: marketArg, quantity: quantityArg });
+    };
 
-				try {
-					var response = JSON.parse(body);
+    self.cancel = function (uuidArg, callback) {
+        api_query('cancel', callback, { uuid: uuidArg });
+    };
 
-					if(response.error) {
-						error = response.error;
-					}
-					else {
-						result = response.return || response;
-					}
-				}
-				catch(e) {
-					error = "Error parsing server response: " + e.message;
-				}
+    self.getopenorders = function (marketArg, callback) {
+        api_query('getopenorders', callback, { market: marketArg });
+    };
 
-				if(typeof callback === 'function') {
-					callback.call(this, error, result);
-				}
-			}
-		});
-	}
+    self.getbalances = function (callback) {
+        api_query('getbalances', callback);
+    };
 
-	function getmarketids(callback) {
-		var callback2 = function(error, markets) {
-			self.markets = {};
+    self.getbalance = function (currencyArg, callback) {
+        api_query('getbalance', callback, { currency: currencyArg });
+    };
 
-			for(var i in markets) {
-				var primary   = markets[i].primary_currency_code;
-				var secondary = markets[i].secondary_currency_code;
+    self.getdepositaddress = function (currencyArg, callback) {
+        api_query('getdepositaddress', callback, { currency: currencyArg });
+    };
 
-				self.markets[primary + secondary] = markets[i].marketid;
-			}
+    self.withdraw = function (currencyArg, quantityArg, addressArg, paymentId, callback) {
+        if (paymentId) {
+            api_query('withdraw', callback, { currency: currencyArg, quantity: quantityArg, address: addressArg, paymentid: paymentId });
+        } else {
+            api_query('withdraw', callback, { currency: currencyArg, quantity: quantityArg, address: addressArg });
+        }
+    };
 
-			callback(error, self.markets);
-		};
+    self.getorder = function (uuidArg, callback) {
+        api_query('getorder', callback, { uuid : uuidArg });
+    };
 
-		self.getmarkets(callback2);
-	}
+    self.getorderhistory = function (marketArg, countArg) {
+        api_query('getorderhistory', callback, { market: marketArg, count: countArg });
+    };
 
-	// This function gets the market id for a market in the format 'LTCBTC'
-	self.getmarketid = function(marketname, callback) {
-		if(typeof callback !== 'function') {
-			throw new Error("'callback' argument must be a function.");
-		}
+    self.getwithdrawalhistory = function (currencyArg, countArg) {
+        api_query('getwithdrawalhistory', callback, { currency: currencyArg, count: countArg });
+    };
 
-		if(!self.markets || !Object.keys(self.markets).length) {
-			getmarketids(function(error, markets) {
-				callback.call(this, error, markets[marketname]);
-			});
-		}
-		else {
-			callback.call(this, null, self.markets[marketname]);
-		}
-	};
-
-	// Old API method
-	self.marketdata = function(callback) {
-		api_query('marketdata', callback);
-	};
-
-	// New API method
-	self.marketdatav2 = function(callback) {
-		api_query('marketdatav2', callback);
-	};
-
-	self.singlemarketdata = function(marketid, callback) {
-		api_query('singlemarketdata', callback, { marketid: marketid });
-	};
-
-	self.orderdata = function(callback) {
-		api_query('orderdata', callback);
-	};
-
-	self.orderdatav2 = function(callback) {
-		api_query('orderdatav2', callback);
-	};
-
-	self.singleorderdata = function(marketid, callback) {
-		api_query('singleorderdata', callback, { marketid: marketid });
-	};
-
-	self.getinfo = function(callback) {
-		api_query("getinfo", callback);
-	};
-
-	self.getmarkets = function(callback) {
-		api_query('getmarkets', callback);
-	};
-
-	self.mytransactions = function(callback) {
-		api_query('mytransactions', callback);
-	};
-
-	self.markettrades = function(marketid, callback) {
-		api_query('markettrades', callback, { marketid: marketid });
-	};
-
-	self.marketorders = function(marketid, callback) {
-		api_query('marketorders', callback, { marketid: marketid });
-	};
-
-	self.mytrades = function(marketid, limit, callback) {
-		api_query('mytrades', callback, { marketid: marketid, limit: limit });
-	};
-
-	self.allmytrades = function(callback) {
-		api_query('allmytrades', callback);
-	};
-
-	self.allmytradesdaterange = function(dates, callback) {
-		api_query('allmytrades', callback, { startdate: dates.startdate, enddate: dates.enddate });
-	};
-
-	self.myorders = function(marketid, callback) {
-		api_query('myorders', callback, { marketid: marketid });
-	};
-
-	self.depth = function(marketid, callback) {
-		api_query('depth', callback, { marketid: marketid });
-	};
-
-	self.allmyorders = function(callback) {
-		api_query('allmyorders', callback);
-	};
-
-	self.createorder = function(marketid, ordertype, quantity, price, callback) {
-		api_query('createorder', callback, { marketid: marketid, ordertype: ordertype, quantity: quantity, price: price });
-	};
-
-	self.cancelorder = function(orderid, callback) {
-		api_query('cancelorder', callback, { orderid: orderid });
-	};
-
-	self.cancelmarketorders = function(marketid, callback) {
-		api_query('cancelmarketorders', callback, { marketid: marketid });
-	};
-
-	self.calculatefees = function(ordertype, quantity, price, callback) {
-		api_query('calculatefees', callback, { ordertype: ordertype, quantity: quantity, price: price });
-	};
-
-	self.mytransfers = function(callback) {
-		api_query('mytransfers', callback);
-	};
-
-	self.getwalletstatus = function(callback) {
-		api_query('getwalletstatus', callback);
-	};
-
-	self.makewithdrawal = function(address, amount, callback) {
-		api_query('makewithdrawal', callback, { address: address, amount: amount });
-	};
-	
-	self.getorderstatus = function(orderid, callback) {
-		api_query('getorderstatus', callback, { orderid: orderid });
-	};
-
+    self.getdeposithistory = function (currencyArg, countArg) {
+        api_query('getdesposithistory', callback, { currency: currencyArg, count: countArg });
+    };
 }
 
-module.exports = CryptsyClient;
+module.exports = BittrexClient;
+

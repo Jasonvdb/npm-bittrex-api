@@ -1,13 +1,13 @@
 {
-	"name": "cryptsy-api",
-	"version": "0.2.5",
-	"description": "cryptsy.com API client for node.js",
+	"name": "bittrex-api",
+	"version": "0.1.1",
+	"description": "bittrex.com API client for node.js",
 	"keywords": [
 		"btc",
 		"bitcoin",
-		"crypsty"
+		"bittrex"
 	],
-	"author": "Robert Myers (https://github.com/nothingisdead)",
+	"author": "Marvin White (https://github.com/mwhite73)",
 	"contributors": [
 	],
 	"license": "MIT",
@@ -17,15 +17,15 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/nothingisdead/npm-cryptsy-api"
+		"url": "https://github.com/mwhite73/npm-bittrex-api.git"
 	},
-	"main": "cryptsy.js",
+	"main": "bittrex.js",
 	"engines": {
 		"node": ">=0.10"
 	},
 	"bugs": {
-		"url": "https://github.com/nothingisdead/npm-cryptsy-api/issues",
-		"email": "rbmyr8@gmail.com"
+		"url": "https://github.com/mwhite73/npm-bittrex-api/issues",
+		"email": "marvin@tumblingblock.com"
 	},
 	"readmeFilename": "README.md"
 }

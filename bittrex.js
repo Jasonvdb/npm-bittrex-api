@@ -1,4 +1,4 @@
-var stringify = require("querystring").stringify,
+﻿var stringify = require("querystring").stringify,
     hmac = require("crypto").createHmac,
     request = require("request"),
     hmac_sha512 = require('./hmac-sha512.js'),
@@ -154,7 +154,10 @@ function BittrexClient(key, secret, requeue) {
     };
 
     self.getopenorders = function (marketArg, callback) {
-        api_query('getopenorders', callback, { market: marketArg });
+        if (marketArg)
+            api_query('getopenorders', callback, { market: marketArg });
+        else
+            api_query('getopenorders', callback);
     };
 
     self.getbalances = function (callback) {
@@ -182,7 +185,19 @@ function BittrexClient(key, secret, requeue) {
     };
 
     self.getorderhistory = function (marketArg, countArg, callback) {
-        api_query('getorderhistory', callback, { market: marketArg, count: countArg });
+        if (marketArg) {
+            if (countArg) {
+                api_query('getorderhistory', callback, { market: marketArg, count: countArg });
+            } else {
+                api_query('getorderhistory', callback, { market: marketArg });
+            }
+        } else {
+            if (countArg) {
+                api_query('getorderhistory', callback, { count: countArg });
+            } else {
+                api_query('getorderhistory', callback);
+            }
+        }
     };
 
     self.getwithdrawalhistory = function (currencyArg, countArg, callback) {
